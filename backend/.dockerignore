@@ -1,0 +1,37 @@
+# Binarios
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Archivos de test
+*_test.go
+*.test
+
+# Archivos de desarrollo
+.env
+.env.local
+*.log
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Documentación
+README.md
+*.md
+

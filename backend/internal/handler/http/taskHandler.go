@@ -1,0 +1,137 @@
+package http
+
+import (
+	"net/http"
+	"strconv"
+
+	"github.com/gin-gonic/gin"
+
+	"bgray/taskApi/internal/domain"
+	"bgray/taskApi/internal/usecase/task"
+)
+
+// parseTaskID extrae y valida el ID de la URL
+// Retorna el ID parseado y true si es válido, o false si hay error (ya respondió al cliente)
+func parseTaskID(ctx *gin.Context) (int, bool) {
+	idStr := ctx.Param("id")
+	taskID, err := strconv.Atoi(idStr)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid task id"})
+		return 0, false
+	}
+	return taskID, true
+}
+
+type TaskHandler struct {
+	createTaskUseCase  *task.CreateTask
+	getTaskUseCase     *task.GetByIdTaskUseCase
+	getAllTasksUseCase *task.GetAllTasksUseCase
+	deleteTaskByID     *task.DeleteTaskById
+	completedTask      *task.CompletedTask
+}
+
+func NewTaskHandler(
+	createTaskUseCase *task.CreateTask,
+	getTaskUseCase *task.GetByIdTaskUseCase,
+	getAllTasksUseCase *task.GetAllTasksUseCase,
+	deleteTaskByID *task.DeleteTaskById,
+	completedTask *task.CompletedTask,
+
+) *TaskHandler {
+	return &TaskHandler{
+		createTaskUseCase:  createTaskUseCase,
+		getTaskUseCase:     getTaskUseCase,
+		getAllTasksUseCase: getAllTasksUseCase,
+		deleteTaskByID:     deleteTaskByID,
+		completedTask:      completedTask,
+	}
+}
+
+func (h *TaskHandler) CreateTask(ctx *gin.Context) {
+	var req struct {
+		Title     string `json:"title" binding:"required"`
+		Completed bool   `json:"completed"`
+	}
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	task := domain.Task{
+		Title:     req.Title,
+		Completed: req.Completed,
+	}
+
+	createdTask, err := h.createTaskUseCase.Execute(task)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, createdTask)
+}
+
+func (h *TaskHandler) GetTask(ctx *gin.Context) {
+	taskID, ok := parseTaskID(ctx)
+	if !ok {
+		return
+	}
+
+	task, err := h.getTaskUseCase.Execute(taskID)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, task)
+}
+
+func (h *TaskHandler) GetAllTasks(ctx *gin.Context) {
+	tasks, err := h.getAllTasksUseCase.Execute()
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"tasks": tasks})
+}
+
+func (h *TaskHandler) DeleteTaskById(ctx *gin.Context) {
+	taskID, ok := parseTaskID(ctx)
+	if !ok {
+		return
+	}
+
+	message, err := h.deleteTaskByID.Execute(taskID)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": message})
+}
+
+func (h *TaskHandler) CompletedTask(ctx *gin.Context) {
+	taskID, ok := parseTaskID(ctx)
+	if !ok {
+		return
+	}
+
+	// Obtener status del body
+	var req struct {
+		Status bool `json:"status"`
+	}
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	updateTask, err := h.completedTask.Execute(taskID, req.Status)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, updateTask)
+}

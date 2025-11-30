@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Tareas</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>📝 Gestor de Tareas</h1>
+        
+        <!-- Formulario para crear tarea -->
+        <div class="card">
+            <h2>Crear Nueva Tarea</h2>
+            <form id="createTaskForm">
+                <input type="text" id="taskTitle" placeholder="Título de la tarea" required>
+                <label>
+                    <input type="checkbox" id="taskCompleted"> Completada
+                </label>
+                <button type="submit">Crear Tarea</button>
+            </form>
+        </div>
+
+        <!-- Buscar tarea por ID -->
+        <div class="card">
+            <h2>Buscar Tarea por ID</h2>
+            <form id="getTaskForm">
+                <input type="number" id="taskId" placeholder="ID de la tarea" required>
+                <button type="submit">Buscar</button>
+            </form>
+            <div id="taskResult" class="task-result"></div>
+        </div>
+
+        <!-- Lista de tareas -->
+        <div class="card">
+            <div class="header-actions">
+                <h2>Todas las Tareas</h2>
+                <button onclick="loadAllTasks()">🔄 Actualizar</button>
+            </div>
+            <div id="tasksList" class="tasks-list"></div>
+        </div>
+
+        <!-- Mensajes de error/éxito -->
+        <div id="message" class="message"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+

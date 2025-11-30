@@ -41,6 +41,31 @@
             <div id="tasksList" class="tasks-list"></div>
         </div>
 
+        <!-- Sesión simulada -->
+        <div class="card user-session">
+            <div class="header-actions">
+                <h2>Sesión simulada</h2>
+                <button onclick="loadUserTasks()">🔄 Mis tareas</button>
+            </div>
+            <form id="simulatedLoginForm" class="simulated-login-form">
+                <label for="simulatedUserId">User ID</label>
+                <input type="number" id="simulatedUserId" min="1" placeholder="Ej: 1" required>
+                <button type="submit">Cambiar usuario</button>
+            </form>
+            <p class="admin-hint">Usa cualquier ID válido para “loguearte”.</p>
+            <div id="userTasksList" class="tasks-list"></div>
+        </div>
+
+        <!-- Vista admin -->
+        <div class="card admin-panel">
+            <div class="header-actions">
+                <h2>Panel Admin</h2>
+                <button onclick="loadAllTasks()">🔄 Actualizar</button>
+            </div>
+            <p class="admin-hint">Vista completa con el usuario dueño de cada tarea.</p>
+            <div id="adminTasksList" class="tasks-list"></div>
+        </div>
+
         <!-- Mensajes de error/éxito -->
         <div id="message" class="message"></div>
     </div>

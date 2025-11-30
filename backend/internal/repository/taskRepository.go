@@ -8,4 +8,5 @@ type TaskRepository interface {
 	CreateTask(task domain.Task) (*domain.Task, error)
 	DeleteTaskById(id int) error
 	CompletedTask(id int, status bool) (*domain.Task, error)
+	GetTasksByUserID(userID int) ([]domain.Task, error)
 }

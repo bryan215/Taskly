@@ -10,8 +10,9 @@ import (
 	"bgray/taskApi/internal/infrastructure/config"
 	"bgray/taskApi/internal/infrastructure/databases"
 	"bgray/taskApi/internal/infrastructure/repository"
+	"bgray/taskApi/internal/infrastructure/security"
 	"bgray/taskApi/internal/usecase/task"
-	USerCase "bgray/taskApi/internal/usecase/user"
+	uSerCase "bgray/taskApi/internal/usecase/user"
 )
 
 func main() {
@@ -33,9 +34,11 @@ func main() {
 	getAllTasksUseCase := task.NewGetAllTasksUseCase(taskRepo)
 	deleteTaskById := task.NewDeleteTaskById(taskRepo)
 	completedTask := task.NewCompletedTask(taskRepo)
-	createUser := USerCase.NewCreateUser(UserRepo)
+	hasher := security.NewBcryptHasher()
+	createUser := uSerCase.NewCreateUser(UserRepo, hasher)
+	getTasksByUserID := task.NewGetTasksByUserID(taskRepo)
 
-	taskHandler := http.NewTaskHandler(createTaskUseCase, getTaskUseCase, getAllTasksUseCase, deleteTaskById, completedTask, createUser)
+	taskHandler := http.NewTaskHandler(createTaskUseCase, getTaskUseCase, getAllTasksUseCase, deleteTaskById, completedTask, createUser, getTasksByUserID)
 
 	router := gin.Default()
 
@@ -61,6 +64,7 @@ func main() {
 		api.DELETE("/tasks/:id", taskHandler.DeleteTaskById)
 		api.PATCH("/tasks/:id/completed", taskHandler.CompletedTask)
 		api.POST("/users/register", taskHandler.CreatedUser)
+		api.GET("/users/:id/tasks", taskHandler.GetTasksByUserID)
 	}
 
 	fmt.Println("Server starting on :8080")

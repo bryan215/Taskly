@@ -29,6 +29,7 @@ type TaskHandler struct {
 	getAllTasksUseCase *task.GetAllTasksUseCase
 	deleteTaskByID     *task.DeleteTaskById
 	completedTask      *task.CompletedTask
+	getTasksByUserID   *task.GetTasksByUserID
 	createUser         *user.CreateUser
 }
 
@@ -39,6 +40,7 @@ func NewTaskHandler(
 	deleteTaskByID *task.DeleteTaskById,
 	completedTask *task.CompletedTask,
 	createUser *user.CreateUser,
+	getTasksByUserID *task.GetTasksByUserID,
 
 ) *TaskHandler {
 	return &TaskHandler{
@@ -48,6 +50,7 @@ func NewTaskHandler(
 		deleteTaskByID:     deleteTaskByID,
 		completedTask:      completedTask,
 		createUser:         createUser,
+		getTasksByUserID:   getTasksByUserID,
 	}
 }
 
@@ -167,4 +170,21 @@ func (h *TaskHandler) CreatedUser(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusCreated, createdUser)
 
+}
+
+func (h *TaskHandler) GetTasksByUserID(ctx *gin.Context) {
+	userIDParam := ctx.Param("id")
+	userID, err := strconv.Atoi(userIDParam)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
+		return
+	}
+
+	tasks, err := h.getTasksByUserID.Execute(userID)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"tasks": tasks})
 }

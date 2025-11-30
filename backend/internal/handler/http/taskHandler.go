@@ -8,6 +8,7 @@ import (
 
 	"bgray/taskApi/internal/domain"
 	"bgray/taskApi/internal/usecase/task"
+	"bgray/taskApi/internal/usecase/user"
 )
 
 // parseTaskID extrae y valida el ID de la URL
@@ -28,6 +29,7 @@ type TaskHandler struct {
 	getAllTasksUseCase *task.GetAllTasksUseCase
 	deleteTaskByID     *task.DeleteTaskById
 	completedTask      *task.CompletedTask
+	createUser         *user.CreateUser
 }
 
 func NewTaskHandler(
@@ -36,6 +38,7 @@ func NewTaskHandler(
 	getAllTasksUseCase *task.GetAllTasksUseCase,
 	deleteTaskByID *task.DeleteTaskById,
 	completedTask *task.CompletedTask,
+	createUser *user.CreateUser,
 
 ) *TaskHandler {
 	return &TaskHandler{
@@ -44,6 +47,7 @@ func NewTaskHandler(
 		getAllTasksUseCase: getAllTasksUseCase,
 		deleteTaskByID:     deleteTaskByID,
 		completedTask:      completedTask,
+		createUser:         createUser,
 	}
 }
 
@@ -134,4 +138,33 @@ func (h *TaskHandler) CompletedTask(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, updateTask)
+}
+
+func (h *TaskHandler) CreatedUser(ctx *gin.Context) {
+
+	var req struct {
+		Email    string `json:"email" binding:"required"`
+		Username string `json:"username" binding:"required"`
+		Password string `json:"password" binding:"required"`
+	}
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	user := domain.User{
+		Username: req.Username,
+		Email:    req.Email,
+		Password: req.Password,
+	}
+
+	createdUser, err := h.createUser.Execute(user)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, createdUser)
+
 }

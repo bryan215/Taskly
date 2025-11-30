@@ -1,4 +1,5 @@
 const API_BASE_URL = 'http://localhost:8080/api/v1';
+let simulatedUserId = null;
 
 // Mostrar mensaje
 function showMessage(text, type = 'success') {
@@ -78,47 +79,82 @@ document.getElementById('getTaskForm').addEventListener('submit', async (e) => {
     }
 });
 
-// Cargar todas las tareas
+async function fetchTasks() {
+    const response = await fetch(`${API_BASE_URL}/tasks`);
+    if (!response.ok) {
+        let errorMessage = 'Error al cargar las tareas';
+        try {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorMessage;
+        } catch (_) {
+            // ignorado
+        }
+        throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+    return data.tasks || [];
+}
+
+function renderTasks(containerId, tasks, options = {}) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const { showUser = false, showActions = true } = options;
+
+    if (!tasks.length) {
+        container.innerHTML = '<div class="empty-state">No hay tareas disponibles</div>';
+        return;
+    }
+
+    container.innerHTML = tasks.map(task => `
+        <div class="task-item ${task.completed ? 'completed' : ''}">
+            <div class="task-info">
+                <div class="task-title">${task.title}</div>
+                <div class="task-id">ID: ${task.id}</div>
+                ${showUser ? `
+                <div class="task-user">
+                    <span>👤 Usuario ID: ${task.user_id ?? 'N/A'}</span>
+                    ${task.user && task.user.username ? `<span class="task-username">@${task.user.username}</span>` : ''}
+                </div>` : ''}
+                <span class="task-status ${task.completed ? 'completed' : 'pending'}">
+                    ${task.completed ? '✓ Completada' : '⏳ Pendiente'}
+                </span>
+            </div>
+            ${showActions ? `
+            <div class="task-actions">
+                <button class="btn-small btn-success" onclick="toggleTask(${task.id}, ${!task.completed})">
+                    ${task.completed ? '↩ Desmarcar' : '✓ Completar'}
+                </button>
+                <button class="btn-small btn-danger" onclick="deleteTask(${task.id})">
+                    🗑 Eliminar
+                </button>
+            </div>` : ''}
+        </div>
+    `).join('');
+}
+
+// Cargar todas las tareas (usuario + admin)
 async function loadAllTasks() {
     const tasksList = document.getElementById('tasksList');
+    const adminTasksList = document.getElementById('adminTasksList');
+
     tasksList.innerHTML = '<p>Cargando...</p>';
+    if (adminTasksList) {
+        adminTasksList.innerHTML = '<p>Cargando...</p>';
+    }
     
     try {
-        const response = await fetch(`${API_BASE_URL}/tasks`);
-        
-        if (!response.ok) {
-            throw new Error('Error al cargar las tareas');
+        const tasks = await fetchTasks();
+        renderTasks('tasksList', tasks, { showUser: false, showActions: true });
+        if (adminTasksList) {
+            renderTasks('adminTasksList', tasks, { showUser: true, showActions: false });
         }
-        
-        const data = await response.json();
-        const tasks = data.tasks || [];
-        
-        if (tasks.length === 0) {
-            tasksList.innerHTML = '<div class="empty-state">No hay tareas disponibles</div>';
-            return;
-        }
-        
-        tasksList.innerHTML = tasks.map(task => `
-            <div class="task-item ${task.completed ? 'completed' : ''}">
-                <div class="task-info">
-                    <div class="task-title">${task.title}</div>
-                    <div class="task-id">ID: ${task.id}</div>
-                    <span class="task-status ${task.completed ? 'completed' : 'pending'}">
-                        ${task.completed ? '✓ Completada' : '⏳ Pendiente'}
-                    </span>
-                </div>
-                <div class="task-actions">
-                    <button class="btn-small btn-success" onclick="toggleTask(${task.id}, ${!task.completed})">
-                        ${task.completed ? '↩ Desmarcar' : '✓ Completar'}
-                    </button>
-                    <button class="btn-small btn-danger" onclick="deleteTask(${task.id})">
-                        🗑 Eliminar
-                    </button>
-                </div>
-            </div>
-        `).join('');
     } catch (error) {
         tasksList.innerHTML = `<p style="color: #dc3545;">${error.message}</p>`;
+        if (adminTasksList) {
+            adminTasksList.innerHTML = `<p style="color: #dc3545;">${error.message}</p>`;
+        }
         showMessage(error.message, 'error');
     }
 }
@@ -174,4 +210,68 @@ async function deleteTask(id) {
 
 // Cargar tareas al iniciar
 loadAllTasks();
+setupSimulatedLogin();
+
+function setupSimulatedLogin() {
+    const form = document.getElementById('simulatedLoginForm');
+    const input = document.getElementById('simulatedUserId');
+    if (!form || !input) {
+        return;
+    }
+
+    simulatedUserId = Number(input.value) || 1;
+    input.value = simulatedUserId;
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const value = Number(input.value);
+        if (!value || value < 1) {
+            showMessage('Ingresa un ID de usuario válido', 'error');
+            return;
+        }
+        simulatedUserId = value;
+        showMessage(`Usuario simulado: #${simulatedUserId}`, 'success');
+        loadUserTasks();
+    });
+
+    loadUserTasks();
+}
+
+async function loadUserTasks() {
+    const list = document.getElementById('userTasksList');
+    if (!list) return;
+
+    if (!simulatedUserId) {
+        list.innerHTML = '<div class="empty-state">Selecciona un usuario para ver sus tareas.</div>';
+        return;
+    }
+
+    list.innerHTML = '<p>Cargando...</p>';
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/users/${simulatedUserId}/tasks`);
+
+        if (!response.ok) {
+            let errorMsg = 'Error al cargar las tareas del usuario';
+            try {
+                const error = await response.json();
+                errorMsg = error.error || errorMsg;
+            } catch (_) {
+                // ignorado
+            }
+            throw new Error(errorMsg);
+        }
+
+        const data = await response.json();
+        const tasks = data.tasks || [];
+
+        renderTasks('userTasksList', tasks, { showUser: false, showActions: false });
+        if (!tasks.length) {
+            document.getElementById('userTasksList').innerHTML = `<div class="empty-state">El usuario #${simulatedUserId} no tiene tareas.</div>`;
+        }
+    } catch (error) {
+        list.innerHTML = `<p style="color: #dc3545;">${error.message}</p>`;
+        showMessage(error.message, 'error');
+    }
+}
 

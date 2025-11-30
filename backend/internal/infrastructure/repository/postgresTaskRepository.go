@@ -83,5 +83,15 @@ func (r *PostgresTaskRepository) CompletedTask(id int, status bool) (*domain.Tas
 	return &task, nil
 }
 
+func (r *PostgresTaskRepository) GetTasksByUserID(userID int) ([]domain.Task, error) {
+	var tasks []domain.Task
+
+	if err := r.db.Where("user_id = ?", userID).Find(&tasks).Error; err != nil {
+		return nil, err
+	}
+
+	return tasks, nil
+}
+
 // Verificación en tiempo de compilación que implementa la interfaz
 var _ taskRepo.TaskRepository = (*PostgresTaskRepository)(nil)

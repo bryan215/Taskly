@@ -3,6 +3,7 @@ package databases
 import (
 	"fmt"
 
+	"bgray/taskApi/internal/domain"
 	"bgray/taskApi/internal/infrastructure/config"
 
 	"gorm.io/driver/postgres"
@@ -16,6 +17,15 @@ func NewPostgresDB(cfg *config.Config) (*gorm.DB, error) {
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect database: %w", err)
+	}
+	err = db.AutoMigrate(&domain.Task{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to migrate: %w", err)
+	}
+
+	err = db.AutoMigrate((&domain.User{}))
+	if err != nil {
+		return nil, fmt.Errorf("failed to migrate: %w", err)
 	}
 
 	return db, nil

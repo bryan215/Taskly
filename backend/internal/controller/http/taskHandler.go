@@ -22,32 +22,17 @@ func parseTaskID(ctx *gin.Context) (int, bool) {
 }
 
 type TaskHandler struct {
-	taskService        *task.Service
-	getTaskUseCase     *task.GetByIdTaskUseCase
-	getAllTasksUseCase *task.GetAllTasksUseCase
-	deleteTaskByID     *task.DeleteTaskById
-	completedTask      *task.CompletedTask
-	getTasksByUserID   *task.GetTasksByUserID
-	userService        *user.Service
+	taskService *task.Service
+	userService *user.Service
 }
 
 func NewTaskHandler(
 	taskService *task.Service,
-	getTaskUseCase *task.GetByIdTaskUseCase,
-	getAllTasksUseCase *task.GetAllTasksUseCase,
-	deleteTaskByID *task.DeleteTaskById,
-	completedTask *task.CompletedTask,
-	getTasksByUserID *task.GetTasksByUserID,
 	userService *user.Service,
 ) *TaskHandler {
 	return &TaskHandler{
-		taskService:        taskService,
-		getTaskUseCase:     getTaskUseCase,
-		getAllTasksUseCase: getAllTasksUseCase,
-		deleteTaskByID:     deleteTaskByID,
-		completedTask:      completedTask,
-		getTasksByUserID:   getTasksByUserID,
-		userService:        userService,
+		taskService: taskService,
+		userService: userService,
 	}
 }
 
@@ -78,37 +63,13 @@ func (h *TaskHandler) CreateTask(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, createdTask)
 }
 
-func (h *TaskHandler) GetTask(ctx *gin.Context) {
-	taskID, ok := parseTaskID(ctx)
-	if !ok {
-		return
-	}
-
-	task, err := h.getTaskUseCase.Execute(taskID)
-	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, task)
-}
-
-func (h *TaskHandler) GetAllTasks(ctx *gin.Context) {
-	tasks, err := h.getAllTasksUseCase.Execute()
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	ctx.JSON(http.StatusOK, gin.H{"tasks": tasks})
-}
-
 func (h *TaskHandler) DeleteTaskById(ctx *gin.Context) {
 	taskID, ok := parseTaskID(ctx)
 	if !ok {
 		return
 	}
 
-	message, err := h.deleteTaskByID.Execute(taskID)
+	message, err := h.taskService.DeleteTaskById(taskID)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
@@ -133,7 +94,7 @@ func (h *TaskHandler) CompletedTask(ctx *gin.Context) {
 		return
 	}
 
-	updateTask, err := h.completedTask.Execute(taskID, req.Status)
+	updateTask, err := h.taskService.CompletedTask(taskID, req.Status)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -179,7 +140,7 @@ func (h *TaskHandler) GetTasksByUserID(ctx *gin.Context) {
 		return
 	}
 
-	tasks, err := h.getTasksByUserID.Execute(userID)
+	tasks, err := h.taskService.GetTasksByUserID(userID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

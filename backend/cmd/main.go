@@ -29,12 +29,6 @@ func main() {
 	//repository
 	taskRepo := repository.NewPostgresTaskRepository(db)
 	userRepo := repository.NewPostgresUserRepository(db)
-
-	getTaskUseCase := task.NewGetByIdTaskUseCase(taskRepo)
-	getAllTasksUseCase := task.NewGetAllTasksUseCase(taskRepo)
-	deleteTaskById := task.NewDeleteTaskById(taskRepo)
-	completedTask := task.NewCompletedTask(taskRepo)
-	getTasksByUserID := task.NewGetTasksByUserID(taskRepo)
 	hasher := security.NewBcryptHasher()
 
 	//Service
@@ -43,11 +37,6 @@ func main() {
 
 	taskHandler := http.NewTaskHandler(
 		taskService,
-		getTaskUseCase,
-		getAllTasksUseCase,
-		deleteTaskById,
-		completedTask,
-		getTasksByUserID,
 		userService,
 	)
 
@@ -70,8 +59,6 @@ func main() {
 	api := router.Group("/api/v1")
 	{
 		api.POST("/tasks", taskHandler.CreateTask)
-		api.GET("/tasks/:id", taskHandler.GetTask)
-		api.GET("/tasks", taskHandler.GetAllTasks)
 		api.DELETE("/tasks/:id", taskHandler.DeleteTaskById)
 		api.PATCH("/tasks/:id/completed", taskHandler.CompletedTask)
 		api.POST("/users/register", taskHandler.CreatedUser)

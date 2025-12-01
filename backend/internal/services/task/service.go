@@ -2,6 +2,7 @@ package task
 
 import (
 	"bgray/taskApi/internal/domain"
+	"fmt"
 )
 
 type taskRepository interface {
@@ -31,4 +32,29 @@ func (svc *Service) CreateTask(task domain.Task) (*domain.Task, error) {
 	}
 
 	return createdTask, nil
+}
+
+func (svc *Service) CompletedTask(id int, status bool) (*domain.Task, error) {
+	task, err := svc.repo.CompletedTask(id, status)
+	if err != nil {
+		return nil, err
+	}
+	return task, nil
+}
+
+func (svc *Service) DeleteTaskById(id int) (string, error) {
+	err := svc.repo.DeleteTaskById(id)
+	if err != nil {
+		return "", err
+	}
+	message := fmt.Sprintf("Se ha eliminado el siguiente id: %d", id)
+	return message, nil
+}
+
+func (svc *Service) GetTasksByUserID(userID int) ([]domain.Task, error) {
+	tasks, err := svc.repo.GetTasksByUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+	return tasks, nil
 }

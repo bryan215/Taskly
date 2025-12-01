@@ -93,5 +93,4 @@ func (r *PostgresTaskRepository) GetTasksByUserID(userID int) ([]domain.Task, er
 	return tasks, nil
 }
 
-// Verificación en tiempo de compilación que implementa la interfaz
 var _ taskRepo.TaskRepository = (*PostgresTaskRepository)(nil)

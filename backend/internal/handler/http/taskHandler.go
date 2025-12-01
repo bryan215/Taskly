@@ -30,8 +30,7 @@ type TaskHandler struct {
 	deleteTaskByID     *task.DeleteTaskById
 	completedTask      *task.CompletedTask
 	getTasksByUserID   *task.GetTasksByUserID
-	createUser         *user.CreateUser
-	signIn             *user.SingIn
+	userService        *user.Service
 }
 
 func NewTaskHandler(
@@ -40,9 +39,8 @@ func NewTaskHandler(
 	getAllTasksUseCase *task.GetAllTasksUseCase,
 	deleteTaskByID *task.DeleteTaskById,
 	completedTask *task.CompletedTask,
-	createUser *user.CreateUser,
 	getTasksByUserID *task.GetTasksByUserID,
-	signIn *user.SingIn,
+	userService *user.Service,
 ) *TaskHandler {
 	return &TaskHandler{
 		createTaskUseCase:  createTaskUseCase,
@@ -50,9 +48,8 @@ func NewTaskHandler(
 		getAllTasksUseCase: getAllTasksUseCase,
 		deleteTaskByID:     deleteTaskByID,
 		completedTask:      completedTask,
-		createUser:         createUser,
 		getTasksByUserID:   getTasksByUserID,
-		signIn:             signIn,
+		userService:        userService,
 	}
 }
 
@@ -164,7 +161,7 @@ func (h *TaskHandler) CreatedUser(ctx *gin.Context) {
 		Password: req.Password,
 	}
 
-	createdUser, err := h.createUser.Execute(user)
+	createdUser, err := h.userService.CreatedUser(user)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -202,7 +199,7 @@ func (h *TaskHandler) SignIn(ctx *gin.Context) {
 		return
 	}
 
-	user, err := h.signIn.Execute(req.Username, req.Password)
+	user, err := h.userService.SingIn(req.Username, req.Password)
 	if err != nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return

@@ -6,13 +6,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"bgray/taskApi/internal/handler/http"
+	"bgray/taskApi/internal/controller/http"
 	"bgray/taskApi/internal/infrastructure/config"
 	"bgray/taskApi/internal/infrastructure/databases"
 	"bgray/taskApi/internal/infrastructure/repository"
 	"bgray/taskApi/internal/infrastructure/security"
-	"bgray/taskApi/internal/usecase/task"
-	uSerCase "bgray/taskApi/internal/usecase/user"
+	"bgray/taskApi/internal/services/task"
+	"bgray/taskApi/internal/services/user"
 )
 
 func main() {
@@ -38,7 +38,7 @@ func main() {
 
 	//Service
 	hasher := security.NewBcryptHasher()
-	userService := uSerCase.NewService(UserRepo, hasher)
+	userService := user.NewService(UserRepo, hasher)
 
 	taskHandler := http.NewTaskHandler(
 		createTaskUseCase,

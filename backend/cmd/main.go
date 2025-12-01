@@ -37,8 +37,18 @@ func main() {
 	hasher := security.NewBcryptHasher()
 	createUser := uSerCase.NewCreateUser(UserRepo, hasher)
 	getTasksByUserID := task.NewGetTasksByUserID(taskRepo)
+	signIn := uSerCase.NewSingIn(UserRepo, hasher)
 
-	taskHandler := http.NewTaskHandler(createTaskUseCase, getTaskUseCase, getAllTasksUseCase, deleteTaskById, completedTask, createUser, getTasksByUserID)
+	taskHandler := http.NewTaskHandler(
+		createTaskUseCase,
+		getTaskUseCase,
+		getAllTasksUseCase,
+		deleteTaskById,
+		completedTask,
+		createUser,
+		getTasksByUserID,
+		signIn,
+	)
 
 	router := gin.Default()
 
@@ -64,6 +74,7 @@ func main() {
 		api.DELETE("/tasks/:id", taskHandler.DeleteTaskById)
 		api.PATCH("/tasks/:id/completed", taskHandler.CompletedTask)
 		api.POST("/users/register", taskHandler.CreatedUser)
+		api.POST("/users/login", taskHandler.SignIn)
 		api.GET("/users/:id/tasks", taskHandler.GetTasksByUserID)
 	}
 

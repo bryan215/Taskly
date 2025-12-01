@@ -31,6 +31,7 @@ type TaskHandler struct {
 	completedTask      *task.CompletedTask
 	getTasksByUserID   *task.GetTasksByUserID
 	createUser         *user.CreateUser
+	signIn             *user.SingIn
 }
 
 func NewTaskHandler(
@@ -41,7 +42,7 @@ func NewTaskHandler(
 	completedTask *task.CompletedTask,
 	createUser *user.CreateUser,
 	getTasksByUserID *task.GetTasksByUserID,
-
+	signIn *user.SingIn,
 ) *TaskHandler {
 	return &TaskHandler{
 		createTaskUseCase:  createTaskUseCase,
@@ -51,6 +52,7 @@ func NewTaskHandler(
 		completedTask:      completedTask,
 		createUser:         createUser,
 		getTasksByUserID:   getTasksByUserID,
+		signIn:             signIn,
 	}
 }
 
@@ -187,4 +189,31 @@ func (h *TaskHandler) GetTasksByUserID(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"tasks": tasks})
+}
+
+func (h *TaskHandler) SignIn(ctx *gin.Context) {
+	var req struct {
+		Username string `json:"username" binding:"required"`
+		Password string `json:"password" binding:"required"`
+	}
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	user, err := h.signIn.Execute(req.Username, req.Password)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "login successful",
+		"user": gin.H{
+			"id":       user.ID,
+			"username": user.Username,
+			"email":    user.Email,
+		},
+	})
 }

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"bgray/taskApi/internal/domain"
+	"errors"
 
 	"gorm.io/gorm"
 )
@@ -20,5 +21,17 @@ func (r *PostgresUserRepository) CreateUser(user domain.User) (*domain.User, err
 		return nil, err
 	}
 
+	return &user, nil
+}
+
+func (r *PostgresUserRepository) SignIn(identifier string) (*domain.User, error) {
+	var user domain.User
+	err := r.db.Where("username = ? OR email = ?", identifier, identifier).First(&user).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("user not found")
+		}
+		return nil, err
+	}
 	return &user, nil
 }

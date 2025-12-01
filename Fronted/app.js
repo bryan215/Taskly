@@ -45,6 +45,86 @@ document.getElementById('createTaskForm').addEventListener('submit', async (e) =
     }
 });
 
+// Crear usuario
+const createUserForm = document.getElementById('createUserForm');
+if (createUserForm) {
+    createUserForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const username = document.getElementById('userUsername').value.trim();
+        const email = document.getElementById('userEmail').value.trim();
+        const password = document.getElementById('userPassword').value;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/users/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, password })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Error al crear usuario');
+            }
+
+            const user = await response.json();
+            showMessage(`Usuario ${user.username} creado con éxito`, 'success');
+            createUserForm.reset();
+        } catch (error) {
+            showMessage(error.message, 'error');
+        }
+    });
+}
+
+// Login de prueba
+const loginForm = document.getElementById('loginForm');
+if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const username = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        const loginResult = document.getElementById('loginResult');
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/users/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({}));
+                throw new Error(error.error || 'Credenciales inválidas');
+            }
+
+            const data = await response.json();
+            showMessage(`Login exitoso. Hola ${data.user.username}`, 'success');
+
+            if (loginResult) {
+                loginResult.innerHTML = `
+                    <p><strong>ID:</strong> ${data.user.id}</p>
+                    <p><strong>Usuario:</strong> ${data.user.username}</p>
+                    <p><strong>Email:</strong> ${data.user.email}</p>
+                `;
+            }
+
+            // sincroniza el selector de usuario simulado
+            const userIdInput = document.getElementById('simulatedUserId');
+            if (userIdInput && data.user?.id) {
+                simulatedUserId = data.user.id;
+                userIdInput.value = simulatedUserId;
+                loadUserTasks();
+            }
+        } catch (error) {
+            if (loginResult) {
+                loginResult.innerHTML = `<p style="color:#dc3545;">${error.message}</p>`;
+            }
+            showMessage(error.message, 'error');
+        }
+    });
+}
+
 // Buscar tarea por ID
 document.getElementById('getTaskForm').addEventListener('submit', async (e) => {
     e.preventDefault();

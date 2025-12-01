@@ -3,7 +3,6 @@ package task
 import (
 	"bgray/taskApi/internal/domain"
 	"bgray/taskApi/internal/repository"
-	"errors"
 )
 
 type GetTasksByUserID struct {
@@ -19,8 +18,6 @@ func (t *GetTasksByUserID) Execute(userID int) ([]domain.Task, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(tasks) == 0 {
-		return nil, errors.New("no tasks found for user")
-	}
+	// Devolver array vacío en lugar de error si no hay tareas
 	return tasks, nil
 }

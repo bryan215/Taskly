@@ -2,9 +2,7 @@ package repository
 
 import (
 	"bgray/taskApi/internal/domain"
-	taskRepo "bgray/taskApi/internal/repository"
 	"errors"
-
 	"gorm.io/gorm"
 )
 
@@ -92,5 +90,3 @@ func (r *PostgresTaskRepository) GetTasksByUserID(userID int) ([]domain.Task, er
 
 	return tasks, nil
 }
-
-var _ taskRepo.TaskRepository = (*PostgresTaskRepository)(nil)

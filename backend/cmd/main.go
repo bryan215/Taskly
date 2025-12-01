@@ -26,22 +26,23 @@ func main() {
 		log.Fatal("Error connecting to database:", err)
 	}
 
+	//repository
 	taskRepo := repository.NewPostgresTaskRepository(db)
-	UserRepo := repository.NewPostgresUserRepository(db)
+	userRepo := repository.NewPostgresUserRepository(db)
 
-	createTaskUseCase := task.NewCreateTask(taskRepo)
 	getTaskUseCase := task.NewGetByIdTaskUseCase(taskRepo)
 	getAllTasksUseCase := task.NewGetAllTasksUseCase(taskRepo)
 	deleteTaskById := task.NewDeleteTaskById(taskRepo)
 	completedTask := task.NewCompletedTask(taskRepo)
 	getTasksByUserID := task.NewGetTasksByUserID(taskRepo)
+	hasher := security.NewBcryptHasher()
 
 	//Service
-	hasher := security.NewBcryptHasher()
-	userService := user.NewService(UserRepo, hasher)
+	taskService := task.NewService(taskRepo)
+	userService := user.NewService(userRepo, hasher)
 
 	taskHandler := http.NewTaskHandler(
-		createTaskUseCase,
+		taskService,
 		getTaskUseCase,
 		getAllTasksUseCase,
 		deleteTaskById,

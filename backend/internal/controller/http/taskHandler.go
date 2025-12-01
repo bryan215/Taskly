@@ -22,7 +22,7 @@ func parseTaskID(ctx *gin.Context) (int, bool) {
 }
 
 type TaskHandler struct {
-	createTaskUseCase  *task.CreateTask
+	taskService        *task.Service
 	getTaskUseCase     *task.GetByIdTaskUseCase
 	getAllTasksUseCase *task.GetAllTasksUseCase
 	deleteTaskByID     *task.DeleteTaskById
@@ -32,7 +32,7 @@ type TaskHandler struct {
 }
 
 func NewTaskHandler(
-	createTaskUseCase *task.CreateTask,
+	taskService *task.Service,
 	getTaskUseCase *task.GetByIdTaskUseCase,
 	getAllTasksUseCase *task.GetAllTasksUseCase,
 	deleteTaskByID *task.DeleteTaskById,
@@ -41,7 +41,7 @@ func NewTaskHandler(
 	userService *user.Service,
 ) *TaskHandler {
 	return &TaskHandler{
-		createTaskUseCase:  createTaskUseCase,
+		taskService:        taskService,
 		getTaskUseCase:     getTaskUseCase,
 		getAllTasksUseCase: getAllTasksUseCase,
 		deleteTaskByID:     deleteTaskByID,
@@ -55,6 +55,7 @@ func (h *TaskHandler) CreateTask(ctx *gin.Context) {
 	var req struct {
 		Title     string `json:"title" binding:"required"`
 		Completed bool   `json:"completed"`
+		UserID    int    `json:"user_id" binding:"required"`
 	}
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -65,9 +66,10 @@ func (h *TaskHandler) CreateTask(ctx *gin.Context) {
 	task := domain.Task{
 		Title:     req.Title,
 		Completed: req.Completed,
+		UserID:    req.UserID,
 	}
 
-	createdTask, err := h.createTaskUseCase.Execute(task)
+	createdTask, err := h.taskService.CreateTask(task)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -179,7 +181,7 @@ func (h *TaskHandler) GetTasksByUserID(ctx *gin.Context) {
 
 	tasks, err := h.getTasksByUserID.Execute(userID)
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 

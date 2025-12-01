@@ -7,12 +7,10 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"bgray/taskApi/internal/domain"
-	"bgray/taskApi/internal/usecase/task"
-	"bgray/taskApi/internal/usecase/user"
+	"bgray/taskApi/internal/services/task"
+	"bgray/taskApi/internal/services/user"
 )
 
-// parseTaskID extrae y valida el ID de la URL
-// Retorna el ID parseado y true si es válido, o false si hay error (ya respondió al cliente)
 func parseTaskID(ctx *gin.Context) (int, bool) {
 	idStr := ctx.Param("id")
 	taskID, err := strconv.Atoi(idStr)

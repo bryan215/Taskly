@@ -22,26 +22,14 @@ class ApiClient {
       ...options,
     };
 
-    // Log de peticiones en desarrollo
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[API] ${options.method || 'GET'} ${url}`, options.body ? JSON.parse(options.body as string) : '');
-    }
-
     const response = await fetch(url, config);
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      if (process.env.NODE_ENV === 'development') {
-        console.error(`[API] Error ${response.status} ${url}:`, error);
-      }
       throw new Error(error.error || `HTTP error! status: ${response.status}`);
     }
 
-    const data = await response.json();
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[API] Response ${url}:`, data);
-    }
-    return data;
+    return response.json();
   }
 
   // Auth

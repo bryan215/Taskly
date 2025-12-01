@@ -4,6 +4,7 @@ import (
 	"bgray/taskApi/internal/domain"
 	"errors"
 	"fmt"
+	"strings"
 )
 
 type userRepository interface {
@@ -31,6 +32,9 @@ func (svc *Service) CreatedUser(user domain.User) (*domain.User, error) {
 	}
 	user.Password = hashed
 
+	lowerName := strings.ToLower(user.Username)
+	user.Username = lowerName
+
 	if err := user.Validate(); err != nil {
 		return nil, err
 	}
@@ -44,8 +48,9 @@ func (svc *Service) CreatedUser(user domain.User) (*domain.User, error) {
 }
 
 func (svc *Service) SingIn(u string, p string) (*domain.User, error) {
+	lowerInput := strings.ToLower(u)
 
-	user, err := svc.repo.SignIn(u)
+	user, err := svc.repo.SignIn(lowerInput)
 	if err != nil {
 		return nil, err
 	}

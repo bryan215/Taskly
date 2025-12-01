@@ -17,8 +17,11 @@ export default function HomePage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-xl">Cargando...</div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="text-center">
+        <h1 className="text-5xl font-bold text-indigo-600 mb-2">Taskly</h1>
+        <p className="text-gray-600">Cargando...</p>
+      </div>
     </div>
   );
 }

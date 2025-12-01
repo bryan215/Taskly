@@ -104,8 +104,12 @@ export default function TasksPage() {
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Mis Tareas</h1>
-              <p className="text-gray-700 mt-1">
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="text-3xl font-bold text-indigo-600">Taskly</h1>
+                <span className="text-gray-400">|</span>
+                <h2 className="text-2xl font-semibold text-gray-900">Mis Tareas</h2>
+              </div>
+              <p className="text-gray-700">
                 Hola, <span className="font-semibold text-gray-900">{username || 'Usuario'}</span>
               </p>
             </div>

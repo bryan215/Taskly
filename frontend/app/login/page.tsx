@@ -36,9 +36,13 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
-        <h1 className="text-3xl font-bold text-center mb-6 text-gray-900">
+        <div className="text-center mb-6">
+          <h1 className="text-4xl font-bold text-indigo-600 mb-2">Taskly</h1>
+          <p className="text-gray-500 text-sm">Gestor de Tareas</p>
+        </div>
+        <h2 className="text-2xl font-semibold text-center mb-6 text-gray-900">
           Iniciar Sesión
-        </h1>
+        </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (

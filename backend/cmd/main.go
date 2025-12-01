@@ -34,10 +34,11 @@ func main() {
 	getAllTasksUseCase := task.NewGetAllTasksUseCase(taskRepo)
 	deleteTaskById := task.NewDeleteTaskById(taskRepo)
 	completedTask := task.NewCompletedTask(taskRepo)
-	hasher := security.NewBcryptHasher()
-	createUser := uSerCase.NewCreateUser(UserRepo, hasher)
 	getTasksByUserID := task.NewGetTasksByUserID(taskRepo)
-	signIn := uSerCase.NewSingIn(UserRepo, hasher)
+
+	//Service
+	hasher := security.NewBcryptHasher()
+	userService := uSerCase.NewService(UserRepo, hasher)
 
 	taskHandler := http.NewTaskHandler(
 		createTaskUseCase,
@@ -45,9 +46,8 @@ func main() {
 		getAllTasksUseCase,
 		deleteTaskById,
 		completedTask,
-		createUser,
 		getTasksByUserID,
-		signIn,
+		userService,
 	)
 
 	router := gin.Default()

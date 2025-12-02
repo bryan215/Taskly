@@ -2,6 +2,8 @@ package user
 
 import (
 	"bgray/taskApi/internal/domain"
+	"bgray/taskApi/internal/dto"
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -21,7 +23,13 @@ func NewService(repo userRepository, hasher domain.PasswordHasher) *Service {
 	return &Service{repo: repo, hasher: hasher}
 }
 
-func (svc *Service) CreatedUser(user domain.User) (*domain.User, error) {
+func (svc *Service) CreatedUser(ctx context.Context, req dto.CreateUserRequest) (*domain.User, error) {
+
+	user := domain.User{
+		Username: req.Username,
+		Email:    req.Email,
+		Password: req.Password,
+	}
 	if err := user.Validate(); err != nil {
 		return nil, err
 	}
@@ -35,10 +43,6 @@ func (svc *Service) CreatedUser(user domain.User) (*domain.User, error) {
 	lowerName := strings.ToLower(user.Username)
 	user.Username = lowerName
 
-	if err := user.Validate(); err != nil {
-		return nil, err
-	}
-
 	createdUser, err := svc.repo.CreateUser(user)
 	if err != nil {
 		return nil, err
@@ -47,14 +51,14 @@ func (svc *Service) CreatedUser(user domain.User) (*domain.User, error) {
 	return createdUser, nil
 }
 
-func (svc *Service) SingIn(u string, p string) (*domain.User, error) {
-	lowerInput := strings.ToLower(u)
+func (svc *Service) SingIn(ctx context.Context, req dto.LoginRequest) (*domain.User, error) {
+	lowerInput := strings.ToLower(req.Username)
 
 	user, err := svc.repo.SignIn(lowerInput)
 	if err != nil {
 		return nil, err
 	}
-	if !svc.hasher.Verify(p, user.Password) {
+	if !svc.hasher.Verify(req.Password, user.Password) {
 		return nil, errors.New("invalid credentials")
 	}
 	return user, nil

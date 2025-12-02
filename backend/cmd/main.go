@@ -62,7 +62,7 @@ func main() {
 		api.DELETE("/tasks/:id", taskHandler.DeleteTaskById)
 		api.PATCH("/tasks/:id/completed", taskHandler.CompletedTask)
 		api.POST("/users/register", taskHandler.CreatedUser)
-		api.POST("/users/login", taskHandler.SignIn)
+		api.POST("/users/login", taskHandler.Login)
 		api.GET("/users/:id/tasks", taskHandler.GetTasksByUserID)
 	}
 

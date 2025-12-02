@@ -1,4 +1,5 @@
 import type { Task, CreateTaskRequest } from '@/types';
+import { cookieUtils } from './cookies';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
 
@@ -14,11 +15,20 @@ class ApiClient {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
+    const token = cookieUtils.getToken();
+    
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    };
+
+    // Agregar token si existe
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const config: RequestInit = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
+      headers,
       ...options,
     };
 
@@ -34,7 +44,7 @@ class ApiClient {
 
   // Auth
   async login(credentials: { username: string; password: string }) {
-    return this.request<{ message: string; user: { id: number; username: string; email: string } }>(
+    return this.request<{ message: string; token: string; user: { id: number; username: string; email: string } }>(
       '/users/login',
       {
         method: 'POST',

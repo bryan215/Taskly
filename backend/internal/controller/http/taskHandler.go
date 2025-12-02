@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"bgray/taskApi/internal/domain"
+	"bgray/taskApi/internal/dto"
 	"bgray/taskApi/internal/services/task"
 	"bgray/taskApi/internal/services/user"
 )
@@ -105,30 +106,26 @@ func (h *TaskHandler) CompletedTask(ctx *gin.Context) {
 
 func (h *TaskHandler) CreatedUser(ctx *gin.Context) {
 
-	var req struct {
-		Email    string `json:"email" binding:"required"`
-		Username string `json:"username" binding:"required"`
-		Password string `json:"password" binding:"required"`
-	}
+	var req dto.CreateUserRequest
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	user := domain.User{
-		Username: req.Username,
-		Email:    req.Email,
-		Password: req.Password,
-	}
-
-	createdUser, err := h.userService.CreatedUser(user)
+	createdUser, err := h.userService.CreatedUser(ctx.Request.Context(), req)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, createdUser)
+	response := dto.UserResponse{
+		ID:       createdUser.ID,
+		Username: createdUser.Username,
+		Email:    createdUser.Email,
+	}
+
+	ctx.JSON(http.StatusCreated, response)
 
 }
 
@@ -149,29 +146,28 @@ func (h *TaskHandler) GetTasksByUserID(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"tasks": tasks})
 }
 
-func (h *TaskHandler) SignIn(ctx *gin.Context) {
-	var req struct {
-		Username string `json:"username" binding:"required"`
-		Password string `json:"password" binding:"required"`
-	}
-
+func (h *TaskHandler) Login(ctx *gin.Context) {
+	var req dto.LoginRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	user, err := h.userService.SingIn(req.Username, req.Password)
+	user, err := h.userService.SingIn(ctx.Request.Context(), req)
 	if err != nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"message": "login successful",
-		"user": gin.H{
-			"id":       user.ID,
-			"username": user.Username,
-			"email":    user.Email,
+	response := dto.LoginResponse{
+		Message: "login successful",
+		Token:   "",
+		User: dto.UserResponse{
+			ID:       user.ID,
+			Username: user.Username,
+			Email:    user.Email,
 		},
-	})
+	}
+
+	ctx.JSON(http.StatusOK, response)
 }

@@ -2,6 +2,7 @@ import Cookies from 'js-cookie';
 
 const USER_ID_COOKIE = 'user_id';
 const USERNAME_COOKIE = 'username';
+const TOKEN_COOKIE = 'token';
 
 export const cookieUtils = {
   setUserId(userId: number) {
@@ -21,9 +22,22 @@ export const cookieUtils = {
     return Cookies.get(USERNAME_COOKIE) || null;
   },
 
+  setToken(token: string) {
+    Cookies.set(TOKEN_COOKIE, token, { expires: 7 });
+  },
+
+  getToken(): string | null {
+    return Cookies.get(TOKEN_COOKIE) || null;
+  },
+
   clearAuth() {
     Cookies.remove(USER_ID_COOKIE);
     Cookies.remove(USERNAME_COOKIE);
+    Cookies.remove(TOKEN_COOKIE);
   },
 };
+
+
+
+
 

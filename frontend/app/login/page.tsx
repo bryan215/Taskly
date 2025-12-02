@@ -23,6 +23,11 @@ export default function LoginPage() {
       // Guardar en cookies
       cookieUtils.setUserId(response.user.id);
       cookieUtils.setUsername(response.user.username);
+      
+      // Guardar token si existe (para cuando implementes JWT)
+      if (response.token) {
+        cookieUtils.setToken(response.token);
+      }
 
       // Redirigir a tareas
       router.push('/tasks');

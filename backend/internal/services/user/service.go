@@ -10,7 +10,7 @@ import (
 )
 
 type userRepository interface {
-	CreateUser(u domain.User) (*domain.User, error)
+	CreateUser(u domain.User) error
 	SignIn(u string) (*domain.User, error)
 }
 
@@ -23,7 +23,7 @@ func NewService(repo userRepository, hasher domain.PasswordHasher) *Service {
 	return &Service{repo: repo, hasher: hasher}
 }
 
-func (svc *Service) CreatedUser(ctx context.Context, req dto.CreateUserRequest) (*domain.User, error) {
+func (svc *Service) CreatedUser(ctx context.Context, req dto.CreateUserRequest) error {
 
 	user := domain.User{
 		Username: req.Username,
@@ -31,24 +31,24 @@ func (svc *Service) CreatedUser(ctx context.Context, req dto.CreateUserRequest) 
 		Password: req.Password,
 	}
 	if err := user.Validate(); err != nil {
-		return nil, err
+		return err
 	}
 
 	hashed, err := svc.hasher.Hash(user.Password)
 	if err != nil {
-		return nil, fmt.Errorf("hash password: %w", err)
+		return fmt.Errorf("hash password: %w", err)
 	}
 	user.Password = hashed
 
 	lowerName := strings.ToLower(user.Username)
 	user.Username = lowerName
 
-	createdUser, err := svc.repo.CreateUser(user)
+	err = svc.repo.CreateUser(user)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return createdUser, nil
+	return nil
 }
 
 func (svc *Service) SingIn(ctx context.Context, req dto.LoginRequest) (*domain.User, error) {

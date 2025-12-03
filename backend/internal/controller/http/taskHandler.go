@@ -23,25 +23,34 @@ func parseTaskID(ctx *gin.Context) (int, bool) {
 }
 
 type TaskHandler struct {
-	taskService *task.Service
-	userService *user.Service
+	taskService    *task.Service
+	userService    *user.Service
+	tokenGenerator domain.TokenGenerator
 }
 
 func NewTaskHandler(
 	taskService *task.Service,
 	userService *user.Service,
+	tokenGenerator domain.TokenGenerator,
 ) *TaskHandler {
 	return &TaskHandler{
-		taskService: taskService,
-		userService: userService,
+		taskService:    taskService,
+		userService:    userService,
+		tokenGenerator: tokenGenerator,
 	}
 }
 
 func (h *TaskHandler) CreateTask(ctx *gin.Context) {
+	// Obtener userID del token (ya validado por el middleware)
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "user not authenticated"})
+		return
+	}
+
 	var req struct {
 		Title     string `json:"title" binding:"required"`
 		Completed bool   `json:"completed"`
-		UserID    int    `json:"user_id" binding:"required"`
 	}
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -52,7 +61,7 @@ func (h *TaskHandler) CreateTask(ctx *gin.Context) {
 	task := domain.Task{
 		Title:     req.Title,
 		Completed: req.Completed,
-		UserID:    req.UserID,
+		UserID:    userID.(int),
 	}
 
 	createdTask, err := h.taskService.CreateTask(task)
@@ -65,8 +74,27 @@ func (h *TaskHandler) CreateTask(ctx *gin.Context) {
 }
 
 func (h *TaskHandler) DeleteTaskById(ctx *gin.Context) {
+	// Obtener userID del token
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "user not authenticated"})
+		return
+	}
+
 	taskID, ok := parseTaskID(ctx)
 	if !ok {
+		return
+	}
+
+	// Validar que la tarea pertenezca al usuario
+	task, err := h.taskService.GetTaskById(taskID)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "task not found"})
+		return
+	}
+
+	if task.UserID != userID.(int) {
+		ctx.JSON(http.StatusForbidden, gin.H{"error": "you don't have permission to delete this task"})
 		return
 	}
 
@@ -80,12 +108,29 @@ func (h *TaskHandler) DeleteTaskById(ctx *gin.Context) {
 }
 
 func (h *TaskHandler) CompletedTask(ctx *gin.Context) {
+	// Obtener userID del token
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "user not authenticated"})
+		return
+	}
+
 	taskID, ok := parseTaskID(ctx)
 	if !ok {
 		return
 	}
 
-	// Obtener status del body
+	task, err := h.taskService.GetTaskById(taskID)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "task not found"})
+		return
+	}
+
+	if task.UserID != userID.(int) {
+		ctx.JSON(http.StatusForbidden, gin.H{"error": "you don't have permission to update this task"})
+		return
+	}
+
 	var req struct {
 		Status bool `json:"status"`
 	}
@@ -113,16 +158,14 @@ func (h *TaskHandler) CreatedUser(ctx *gin.Context) {
 		return
 	}
 
-	createdUser, err := h.userService.CreatedUser(ctx.Request.Context(), req)
+	err := h.userService.CreatedUser(ctx.Request.Context(), req)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	response := dto.UserResponse{
-		ID:       createdUser.ID,
-		Username: createdUser.Username,
-		Email:    createdUser.Email,
+	response := dto.CreatedUserResponse{
+		Message: "User created successfully",
 	}
 
 	ctx.JSON(http.StatusCreated, response)
@@ -130,14 +173,13 @@ func (h *TaskHandler) CreatedUser(ctx *gin.Context) {
 }
 
 func (h *TaskHandler) GetTasksByUserID(ctx *gin.Context) {
-	userIDParam := ctx.Param("id")
-	userID, err := strconv.Atoi(userIDParam)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "user not authenticated"})
 		return
 	}
 
-	tasks, err := h.taskService.GetTasksByUserID(userID)
+	tasks, err := h.taskService.GetTasksByUserID(userID.(int))
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -159,14 +201,14 @@ func (h *TaskHandler) Login(ctx *gin.Context) {
 		return
 	}
 
+	token, err := h.tokenGenerator.GenerateToken(*user)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate token"})
+		return
+	}
+
 	response := dto.LoginResponse{
-		Message: "login successful",
-		Token:   "",
-		User: dto.UserResponse{
-			ID:       user.ID,
-			Username: user.Username,
-			Email:    user.Email,
-		},
+		Token: token,
 	}
 
 	ctx.JSON(http.StatusOK, response)

@@ -58,3 +58,11 @@ func (svc *Service) GetTasksByUserID(userID int) ([]domain.Task, error) {
 	}
 	return tasks, nil
 }
+
+func (svc *Service) GetTaskById(id int) (*domain.Task, error) {
+	task, err := svc.repo.GetById(id)
+	if err != nil {
+		return nil, err
+	}
+	return task, nil
+}

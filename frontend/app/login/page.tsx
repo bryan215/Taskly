@@ -20,11 +20,7 @@ export default function LoginPage() {
     try {
       const response = await apiClient.login({ username, password });
       
-      // Guardar en cookies
-      cookieUtils.setUserId(response.user.id);
-      cookieUtils.setUsername(response.user.username);
-      
-      // Guardar token si existe (para cuando implementes JWT)
+      // Guardar token
       if (response.token) {
         cookieUtils.setToken(response.token);
       }

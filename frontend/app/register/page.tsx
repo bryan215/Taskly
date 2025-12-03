@@ -13,21 +13,25 @@ export default function RegisterPage() {
     password: '',
   });
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     setLoading(true);
 
     try {
-      const user = await apiClient.register(formData);
+      const response = await apiClient.register(formData);
       
-      // Guardar en cookies y redirigir a login
-      cookieUtils.setUserId(user.id);
-      cookieUtils.setUsername(user.username);
+      // Mostrar mensaje de éxito del backend
+      setSuccess(response.message);
       
-      router.push('/tasks');
+      // Redirigir a login después de 2 segundos
+      setTimeout(() => {
+        router.push('/login');
+      }, 2000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al registrar usuario');
     } finally {
@@ -50,6 +54,11 @@ export default function RegisterPage() {
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
               {error}
+            </div>
+          )}
+          {success && (
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
+              {success}
             </div>
           )}
 

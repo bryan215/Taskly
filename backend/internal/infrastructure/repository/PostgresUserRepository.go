@@ -15,13 +15,8 @@ func NewPostgresUserRepository(db *gorm.DB) *PostgresUserRepository {
 	return &PostgresUserRepository{db: db}
 }
 
-func (r *PostgresUserRepository) CreateUser(user domain.User) (*domain.User, error) {
-	err := r.db.Create(&user).Error
-	if err != nil {
-		return nil, err
-	}
-
-	return &user, nil
+func (r *PostgresUserRepository) CreateUser(user domain.User) error {
+	return r.db.Create(&user).Error
 }
 
 func (r *PostgresUserRepository) SignIn(identifier string) (*domain.User, error) {

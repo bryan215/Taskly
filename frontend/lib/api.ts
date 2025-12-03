@@ -34,6 +34,16 @@ class ApiClient {
 
     const response = await fetch(url, config);
 
+    // Manejar error 401 (no autorizado) - redirigir al login
+    if (response.status === 401) {
+      cookieUtils.clearAuth();
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Sesión expirada. Por favor inicia sesión nuevamente.');
+    }
+
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
       throw new Error(error.error || `HTTP error! status: ${response.status}`);
@@ -44,7 +54,7 @@ class ApiClient {
 
   // Auth
   async login(credentials: { username: string; password: string }) {
-    return this.request<{ message: string; token: string; user: { id: number; username: string; email: string } }>(
+    return this.request<{ token: string }>(
       '/users/login',
       {
         method: 'POST',
@@ -54,7 +64,7 @@ class ApiClient {
   }
 
   async register(userData: { username: string; email: string; password: string }) {
-    return this.request<{ id: number; username: string; email: string }>(
+    return this.request<{ message: string }>(
       '/users/register',
       {
         method: 'POST',
@@ -64,8 +74,8 @@ class ApiClient {
   }
 
   // Tasks
-  async getTasksByUserId(userId: number) {
-    return this.request<{ tasks: Task[] }>(`/users/${userId}/tasks`);
+  async getMyTasks() {
+    return this.request<{ tasks: Task[] }>('/tasks');
   }
 
   async createTask(taskData: CreateTaskRequest) {

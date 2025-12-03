@@ -3,12 +3,14 @@ package main
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
 	"bgray/taskApi/internal/controller/http"
 	"bgray/taskApi/internal/infrastructure/config"
 	"bgray/taskApi/internal/infrastructure/databases"
+	"bgray/taskApi/internal/infrastructure/middleware"
 	"bgray/taskApi/internal/infrastructure/repository"
 	"bgray/taskApi/internal/infrastructure/security"
 	"bgray/taskApi/internal/services/task"
@@ -30,6 +32,7 @@ func main() {
 	taskRepo := repository.NewPostgresTaskRepository(db)
 	userRepo := repository.NewPostgresUserRepository(db)
 	hasher := security.NewBcryptHasher()
+	jwtService := security.NewJWTService(cfg.JWTSecret, time.Hour*24)
 
 	//Service
 	taskService := task.NewService(taskRepo)
@@ -38,6 +41,7 @@ func main() {
 	taskHandler := http.NewTaskHandler(
 		taskService,
 		userService,
+		jwtService,
 	)
 
 	router := gin.Default()
@@ -58,12 +62,17 @@ func main() {
 
 	api := router.Group("/api/v1")
 	{
-		api.POST("/tasks", taskHandler.CreateTask)
-		api.DELETE("/tasks/:id", taskHandler.DeleteTaskById)
-		api.PATCH("/tasks/:id/completed", taskHandler.CompletedTask)
 		api.POST("/users/register", taskHandler.CreatedUser)
 		api.POST("/users/login", taskHandler.Login)
-		api.GET("/users/:id/tasks", taskHandler.GetTasksByUserID)
+
+		protected := api.Group("")
+		protected.Use(middleware.ProtectHandler(jwtService))
+		{
+			protected.POST("/tasks", taskHandler.CreateTask)
+			protected.DELETE("/tasks/:id", taskHandler.DeleteTaskById)
+			protected.PATCH("/tasks/:id/completed", taskHandler.CompletedTask)
+			protected.GET("/tasks", taskHandler.GetTasksByUserID)
+		}
 	}
 
 	fmt.Println("Server starting on :8080")

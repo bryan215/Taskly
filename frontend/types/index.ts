@@ -17,19 +17,12 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  message: string;
   token: string;
-  user: {
-    id: number;
-    username: string;
-    email: string;
-  };
 }
 
 export interface CreateTaskRequest {
   title: string;
   completed: boolean;
-  user_id: number;
 }
 
 

@@ -6,8 +6,6 @@ type CreateUserRequest struct {
 	Password string `json:"password" binding:"required"`
 }
 
-type UserResponse struct {
-	ID       int    `json:"id"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
+type CreatedUserResponse struct {
+	Message string `json:"message"`
 }

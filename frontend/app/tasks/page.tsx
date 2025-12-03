@@ -17,23 +17,34 @@ export default function TasksPage() {
   const [username, setUsername] = useState<string | null>(null);
 
   useEffect(() => {
-    const userIdFromCookie = cookieUtils.getUserId();
-    const usernameFromCookie = cookieUtils.getUsername();
+    const token = cookieUtils.getToken();
 
-    if (!userIdFromCookie) {
+    // Verificar que exista token y no esté expirado
+    if (!token || cookieUtils.isTokenExpired()) {
+      cookieUtils.clearAuth();
       router.push('/login');
       return;
     }
 
-    setUserId(userIdFromCookie);
-    setUsername(usernameFromCookie);
-    loadTasks(userIdFromCookie);
+    // Obtener userId y username del token
+    const userIdFromToken = cookieUtils.getUserId();
+    const usernameFromToken = cookieUtils.getUsername();
+
+    if (!userIdFromToken || !usernameFromToken) {
+      cookieUtils.clearAuth();
+      router.push('/login');
+      return;
+    }
+
+    setUserId(userIdFromToken);
+    setUsername(usernameFromToken);
+    loadTasks();
   }, [router]);
 
-  const loadTasks = async (userId: number) => {
+  const loadTasks = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.getTasksByUserId(userId);
+      const response = await apiClient.getMyTasks();
       setTasks(response.tasks);
       setError('');
     } catch (err) {
@@ -45,14 +56,13 @@ export default function TasksPage() {
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userId || !newTaskTitle.trim()) return;
+    if (!newTaskTitle.trim()) return;
 
     setCreating(true);
     try {
       const newTask = await apiClient.createTask({
         title: newTaskTitle.trim(),
         completed: false,
-        user_id: userId,
       });
       setTasks([...tasks, newTask]);
       setNewTaskTitle('');

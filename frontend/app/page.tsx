@@ -8,10 +8,15 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    const userId = cookieUtils.getUserId();
-    if (userId) {
+    const token = cookieUtils.getToken();
+    
+    // Verificar que exista token y no esté expirado
+    if (token && !cookieUtils.isTokenExpired()) {
       router.push('/tasks');
     } else {
+      if (token) {
+        cookieUtils.clearAuth(); // Limpiar token expirado
+      }
       router.push('/login');
     }
   }, [router]);

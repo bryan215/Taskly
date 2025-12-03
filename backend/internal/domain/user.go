@@ -38,3 +38,13 @@ type PasswordHasher interface {
 	Hash(password string) (string, error)
 	Verify(password, hash string) bool
 }
+
+type TokenGenerator interface {
+	GenerateToken(user User) (string, error)
+	ValidateToken(tokenString string) (*TokenClaims, error)
+}
+
+type TokenClaims struct {
+	UserID   int
+	Username string
+}
